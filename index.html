@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KurdTV – kurdiska livekanaler</title>
+<meta name="description" content="Samla kurdiska TV-kanaler på ett ställe. Välj, spara favoriter och spela upp live-TV på mobil eller dator.">
+<meta name="theme-color" content="#071017">
+<link rel="icon" type="image/png" href="./assets/icon-192.png">
+<link rel="apple-touch-icon" href="./assets/icon-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="color-scheme" content="dark">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
+<link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+<div id="jsRuntimeWarning" style="position:fixed;inset:0;z-index:99999;background:#061018;color:white;padding:28px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;">
+  <div style="max-width:560px;background:#0d1a24;border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.45)">
+    <div style="font-size:14px;color:#5eead4;font-weight:800;margin-bottom:8px">KurdTV</div>
+    <div style="font-size:26px;font-weight:900;line-height:1.15;margin-bottom:12px">Den här filvisaren kör inte appen</div>
+    <div style="font-size:16px;line-height:1.55;color:#c3d0d8">Om du ser detta öppnas HTML-filen i iPhones filförhandsvisning/Quick Look. Där körs inte JavaScript och därför visas 0 kanaler. KurdTV behöver öppnas som en riktig webbsida i Safari eller ligga på en vanlig webbadress.</div>
+    <div style="margin-top:18px;padding:14px;border-radius:14px;background:#07121a;color:#9fb0bc;font-size:14px;line-height:1.5">På dator fungerar den lokala filen. På iPhone är den stabila lösningen att lägga KurdTV på webben och öppna länken i Safari.</div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">KTV</div>
+      <div><h1>KurdTV</h1><p>Kurdiska livekanaler · mobil & dator</p></div>
+    </div>
+    <div class="search"><input id="search" placeholder="Sök kanal…"></div>
+    <nav class="nav">
+      <button data-view="all" class="active">Alla kanaler <span class="badge" id="allCount">0</span></button>
+      <button data-view="reliable">Rekommenderade <span class="badge" id="reliableCount">0</span></button>
+      <button data-view="working">✓ Fungerar hos mig <span class="badge" id="workingCount">0</span></button>
+      <button data-view="favorites">Favoriter <span class="badge" id="favCount">0</span></button>
+      <button data-view="recent">Senast sedda <span class="badge" id="recentCount">0</span></button>
+      <button data-view="experimental">Experimentella <span class="badge" id="expCount">0</span></button>
+      <button data-view="hidden">Dolda kanaler <span class="badge" id="hiddenCount">0</span></button>
+    </nav>
+    <div class="sideFoot">
+      <div><span class="kbd">↑</span> <span class="kbd">↓</span> zappa &nbsp; <span class="kbd">F</span> favorit</div><div style="margin-top:6px">✕ vid en kanal = dölj den permanent från huvudlistan.</div>
+      <div style="margin-top:6px"><span class="kbd">Enter</span> spela &nbsp; <span class="kbd">T</span> TV-läge</div>
+      <div class="sideActions">
+        <button id="addM3U">+ M3U</button>
+        <button id="sourcesBtn">Källor</button>
+        <button id="exportBtn">Exportera min lista</button>
+        <button id="resetHiddenBtn">Återställ dolda</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topTitle"><strong>Min kurdiska live-TV</strong><span id="syncText">Laddar inbyggd kanalbas…</span></div>
+      <div class="topActions">
+        <button class="btn" id="reloadBtn">↻ Uppdatera</button>
+        <button class="btn" id="castBtn">▣ Casta till TV</button>
+        <button class="btn primary" id="tvBtn">⛶ TV-läge</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="playerCard">
+        <div class="videoWrap"><video id="video" playsinline controls></video></div>
+        <div class="videoOverlay"></div>
+        <div id="centerState" class="centerState">
+          <div class="box"><h3>Välj en kanal</h3><p>Appen använder HLS. Om en ström inte fungerar provar den automatiskt nästa kända adress för samma kanal.</p></div>
+        </div>
+        <div class="channelBug">
+          <div class="now">
+            <div class="nowLogo" id="nowLogo">TV</div>
+            <div class="nowText">
+              <h2 id="nowName">Ingen kanal vald</h2>
+              <p id="nowMeta">—</p>
+              <div class="livePill"><span class="dot"></span> LIVE</div>
+            </div>
+          </div>
+          <div class="zap"><button id="prevBtn" title="Föregående">↑</button><button id="nextBtn" title="Nästa">↓</button></div>
+        </div>
+      </div>
+
+      <section class="right">
+        <div class="rightHead"><div><h2 id="listTitle">Alla kanaler</h2><span id="listMeta">0 kanaler</span></div><span>Scrolla · ★ favorit · ✕ dölj</span></div>
+        <div class="chips" id="chips"></div>
+        <div class="list" id="channelList"></div>
+      </section>
+    </section>
+  </main>
+</div>
+<div class="siteAttribution">KurdTV · Din personliga kanallista lagras bara i den här webbläsaren</div>
+
+<input type="file" id="fileInput" accept=".m3u,.m3u8,text/plain" hidden>
+<div id="toast" class="toast hidden"></div>
+
+<div id="modalBack" class="modalBack hidden">
+ <div class="modal" id="modal"></div>
+</div>
+
+<script defer src="./assets/app.js"></script>
+</body>
+</html>
